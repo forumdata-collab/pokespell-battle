@@ -156,7 +156,8 @@
   .gb-textbox #targetWord.hint-used { color: #e65100; }
   .gb-textbox .timer { color: #333; font-size: 11px; }
   .gb-textbox .timer.danger { color: #c62828; }
-  .gb-textbox #spellInput { background: #fff; color: #222; border: 2px solid #555; }
+  .gb-textbox #spellInput { background: #fff; color: #222; border: 2px solid #555; text-transform: lowercase; }
+  .gb-textbox #spellInput::placeholder { text-transform: none; }
   .gb-textbox #spellInput:focus { border-color: #222; box-shadow: none; }
   .gb-go { background: #3a5f0b; border-color: #222; }
   .gb-go:hover { background: #6fbf3f; color: #000; box-shadow: none; }
@@ -250,7 +251,7 @@
           <span class="timer" id="timer">⏱️ --</span>
         </div>
         <div class="input-row">
-          <input type="text" id="spellInput" placeholder="type the word..." autocomplete="off" spellcheck="false" aria-label="Spell the word">
+          <input type="text" id="spellInput" placeholder="type the word..." autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Spell the word">
           <button class="btn gb-go" style="min-width:auto;padding:12px 18px" onclick="checkSpelling()">GO!</button>
         </div>
       </div>
@@ -441,6 +442,7 @@ function startGame(lvl) {
   nextPokemon();
 }
 function nextPokemon() {
+  startMusic(); // resume BGM after catch
   // random unused Pokémon
   if (!currentPoke) currentPoke = POKEMON[Math.floor(Math.random() * POKEMON.length)];
   else {
