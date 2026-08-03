@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéSpell Battle — Pokémon 英文串字遊戲</title>
+<meta name="description" content="Pokémon 主題英文串字遊戲：睇完生字記低，正確串出嚟打敗寶可夢！適合小學至中學英文學習。">
+<meta property="og:title" content="PokéSpell Battle — Pokémon 英文串字遊戲">
+<meta property="og:description" content="串啱英文生字，打敗寶可夢！四級難度：小學初級至高級。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://forumdata-collab.github.io/pokespell-battle/">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root {
+    --bg: #1a1c2c; --screen: #0f380f; --pixel: #9bbc0f; --pixel-dark: #306230;
+    --pixel-light: #8bac0f; --red: #e74c3c; --blue: #3498db; --yellow: #f1c40f;
+    --white: #ecf0f1; --gray: #7f8c8d; --green: #2ecc71; --orange: #e67e22;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+  body {
+    background: linear-gradient(135deg, #2c3e50, #1a1c2c);
+    min-height: 100vh; display: flex; justify-content: center; align-items: center;
+    font-family: 'Press Start 2P', cursive; color: var(--white); overflow: hidden;
+  }
+  .console {
+    width: 960px; max-width: 98vw; background: #2d3436; border-radius: 40px;
+    padding: 20px 50px;
+    box-shadow: 0 0 0 8px #636e72, 0 0 0 14px #2d3436, 0 20px 50px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .console::before, .console::after {
+    content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; background: #636e72; border-radius: 50%;
+    box-shadow: inset 0 0 0 6px #2d3436;
+  }
+  .console::before { left: 10px; } .console::after { right: 10px; }
+  .screen { background: var(--bg); border: 6px solid #111; border-radius: 12px; overflow: hidden; position: relative; min-height: 580px; }
+  .view { display: none; padding: 24px; flex-direction: column; align-items: center; animation: fadeIn 0.3s ease; }
+  .view.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  h1 { font-size: 22px; color: var(--yellow); text-shadow: 3px 3px 0 #000; margin-bottom: 12px; letter-spacing: 1px; text-align: center; }
+  h2 { font-size: 14px; margin-bottom: 20px; color: var(--pixel); }
+  .btn {
+    background: var(--pixel-dark); border: 4px solid var(--pixel); color: var(--white);
+    font-family: inherit; font-size: 12px; padding: 14px 20px; margin: 8px; cursor: pointer;
+    border-radius: 8px; transition: all 0.1s; min-width: 260px; text-align: center; position: relative; overflow: hidden;
+  }
+  .btn:hover { background: var(--pixel); color: #000; transform: scale(1.05); box-shadow: 0 0 15px rgba(155,188,15,0.4); }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 560px; }
+  .level-card {
+    background: rgba(0,0,0,0.4); border: 3px solid var(--pixel-dark); border-radius: 12px;
+    padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .level-card:hover { border-color: var(--pixel); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+  .level-card h3 { font-size: 12px; color: var(--yellow); margin-bottom: 6px; }
+  .level-card p { font-size: 9px; color: var(--gray); line-height: 1.6; }
+  .level-card .difficulty { display: flex; gap: 4px; justify-content: center; margin-top: 8px; }
+  .star { color: var(--yellow); font-size: 10px; } .star.empty { color: #444; }
+  .battle-area { display: flex; justify-content: space-between; width: 100%; margin: 16px 0; gap: 16px; }
+  .fighter {
+    flex: 1; text-align: center; background: rgba(0,0,0,0.3); border: 3px solid var(--pixel-dark);
+    border-radius: 10px; padding: 12px; position: relative; transition: border-color 0.3s;
+  }
+  .fighter.active-turn { border-color: var(--yellow); box-shadow: 0 0 10px rgba(241,196,15,0.3); }
+  .sprite { width: 120px; height: 120px; margin: 8px auto; filter: drop-shadow(3px 3px 0 #000); transition: transform 0.2s; object-fit: contain; }
+  .sprite.hit { animation: shake 0.5s; } .sprite.attack { animation: lunge 0.4s; } .sprite.caught { animation: catchBounce 0.8s infinite alternate; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 15% { transform: translateX(-14px) rotate(-5deg); } 30% { transform: translateX(14px) rotate(5deg); } 45% { transform: translateX(-10px) rotate(-3deg); } 60% { transform: translateX(10px) rotate(3deg); } 75% { transform: translateX(-6px); } }
+  @keyframes lunge { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(35px) scale(1.15); } 100% { transform: translateX(0) scale(1); } }
+  @keyframes catchBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-15px) scale(1.1); } }
+  .name { font-size: 11px; margin-bottom: 6px; text-shadow: 2px 2px 0 #000; }
+  .hp-bar { background: #333; border: 2px solid #555; height: 16px; border-radius: 4px; overflow: hidden; margin-top: 6px; position: relative; }
+  .hp-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); width: 100%; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); position: relative; }
+  .hp-fill::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%); }
+  .hp-fill.low { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+  .hp-fill.medium { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+  .hp-text { font-size: 9px; margin-top: 4px; color: var(--gray); }
+  .stats { display: flex; justify-content: space-between; width: 100%; font-size: 10px; margin: 10px 0; gap: 10px; }
+  .stat-box { background: rgba(0,0,0,0.4); border: 2px solid var(--pixel-dark); padding: 10px 12px; border-radius: 6px; flex: 1; text-align: center; transition: all 0.2s; }
+  .stat-box.highlight { border-color: var(--yellow); background: rgba(241,196,15,0.1); }
+  .stat-label { color: var(--gray); font-size: 8px; display: block; margin-bottom: 4px; }
+  .stat-value { color: var(--white); font-size: 12px; }
+  .word-box { background: #111; border: 4px solid var(--pixel); border-radius: 10px; padding: 18px; width: 100%; text-align: center; margin: 12px 0; position: relative; }
+  .word-box .label { font-size: 10px; color: var(--gray); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .timer { color: var(--yellow); font-size: 11px; } .timer.danger { color: var(--red); animation: pulse 0.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .word-display { font-size: 22px; letter-spacing: 4px; color: var(--yellow); min-height: 32px; text-shadow: 2px 2px 0 #000; }
+  .word-display.memorize { color: var(--green); animation: pulse 0.6s infinite; }
+  .word-display.hint-used { color: var(--orange); }
+  .input-row { display: flex; width: 100%; gap: 10px; margin-top: 8px; }
+  #spellInput {
+    flex: 1; font-family: inherit; font-size: 14px; padding: 14px; background: #000;
+    border: 3px solid var(--pixel-dark); color: var(--white); border-radius: 6px; outline: none;
+  }
+  #spellInput:focus { border-color: var(--pixel); box-shadow: 0 0 10px rgba(155,188,15,0.3); }
+  #spellInput.correct { border-color: var(--green); animation: correctPulse 0.3s; }
+  #spellInput.wrong { border-color: var(--red); animation: wrongShake 0.4s; }
+  @keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+  @keyframes wrongShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  .msg { font-size: 11px; min-height: 36px; text-align: center; margin: 10px 0; color: var(--pixel-light); line-height: 1.5; }
+  .msg.good { color: var(--green); text-shadow: 0 0 10px rgba(46,204,113,0.4); }
+  .msg.bad { color: var(--red); text-shadow: 0 0 10px rgba(231,76,60,0.4); }
+  .msg.info { color: var(--blue); }
+  .action-btns { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-small { min-width: auto; padding: 10px 16px; font-size: 10px; }
+  .catch-container { text-align: center; animation: zoomIn 0.5s; }
+  @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .caught-sprite { width: 160px; height: 160px; margin: 20px auto; filter: drop-shadow(0 0 20px rgba(241,196,15,0.6)); animation: catchBounce 0.7s infinite alternate; }
+  .catch-stars { font-size: 24px; color: var(--yellow); margin: 12px 0; letter-spacing: 8px; }
+  .game-over-stats { background: rgba(0,0,0,0.4); border: 3px solid var(--red); border-radius: 12px; padding: 20px; margin: 16px 0; text-align: center; width: 100%; max-width: 400px; }
+  .game-over-stats .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; font-size: 11px; }
+  .game-over-stats .stat-row:last-child { border-bottom: none; }
+  .game-over-stats .stat-row span:first-child { color: var(--gray); }
+  .game-over-stats .stat-row span:last-child { color: var(--yellow); }
+  .high-score { font-size: 10px; color: var(--yellow); margin-top: 8px; opacity: 0.8; }
+  .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--yellow); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { font-size: 8px; color: #666; margin-top: 16px; text-align: center; line-height: 1.8; }
+  .mute-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: 2px solid var(--pixel-dark); color: var(--white); font-family: inherit; font-size: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; z-index: 5; }
+  @media (max-width: 640px) {
+    .console { padding: 16px 24px; border-radius: 24px; }
+    .console::before, .console::after { display: none; }
+    h1 { font-size: 16px; }
+    .level-grid { grid-template-columns: 1fr; }
+    .sprite { width: 80px; height: 80px; }
+    .caught-sprite { width: 120px; height: 120px; }
+    .word-display { font-size: 16px; letter-spacing: 2px; }
+    .btn { min-width: 200px; font-size: 10px; padding: 12px 16px; }
+    .stats { gap: 6px; }
+    .stat-box { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="console">
+  <div class="screen">
+    <button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
+
+    <!-- LEVEL SELECT -->
+    <div id="levelView" class="view active">
+      <h1>⚡ POKÉSPELL</h1>
+      <h2>Choose your challenge</h2>
+      <div class="level-grid">
+        <div class="level-card" onclick="startGame('junior')">
+          <h3>Junior Primary</h3>
+          <p>3-letter words &amp; simple vocabulary</p>
+          <div class="difficulty"><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span><span class="star empty">★</span></div>
+        </div>
+        <div class="level-card" onclick="startGame('senior')">
+          <h3>Senior Primary</h3>
+          <p>Common school words &amp; phrases</p>
+          <div class="difficulty"><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></div>
+        </div>
+        <div class="level-card" onclick="startGame('juniorSec')">
+          <h3>Junior Secondary</h3>
+          <p>Longer words &amp; complex spelling</p>
+          <div class="difficulty"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+        </div>
+        <div class="level-card" onclick="startGame('seniorSec')">
+          <h3>Senior Secondary</h3>
+          <p>Advanced &amp; academic vocabulary</p>
+          <div class="difficulty"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+        </div>
+      </div>
+      <div class="high-score" id="menuHighScore">🏆 Best: 0 caught</div>
+      <footer>記住生字 → 正確串出嚟 → 削弱寶可夢<br>3 次命中 → 拋出精靈球！串錯 → 你扣血<br>💡 提示要扣 10 HP</footer>
+    </div>
+
+    <!-- BATTLE -->
+    <div id="battleView" class="view">
+      <div class="stats">
+        <div class="stat-box" id="hitsBox"><span class="stat-label">HITS</span><span class="stat-value" id="hits">0</span><span style="font-size:9px;color:#666">/3</span></div>
+        <div class="stat-box" id="caughtBox"><span class="stat-label">CAUGHT</span><span class="stat-value" id="caughtCount">0</span></div>
+        <div class="stat-box" id="streakBox"><span class="stat-label">STREAK</span><span class="stat-value" id="streak">0</span></div>
+        <div class="stat-box" id="hpBox"><span class="stat-label">YOUR HP</span><span class="stat-value" id="playerHpText">100</span></div>
+      </div>
+
+      <div class="battle-area">
+        <div class="fighter" id="playerFighter">
+          <div class="name">YOU</div>
+          <img class="sprite" id="playerSprite" src="https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/thumbnails-compressed/0025.png" alt="Pikachu" onerror="this.style.visibility='hidden'">
+          <div class="hp-bar"><div class="hp-fill" id="playerHp"></div></div>
+          <div class="hp-text" id="playerHpLabel">100/100</div>
+        </div>
+        <div class="fighter" id="pokeFighter">
+          <div class="name" id="pokeName">???</div>
+          <img class="sprite" id="pokeSprite" src="" alt="Pokemon" style="display:none">
+          <div class="loading" id="pokeLoading" style="margin:40px auto"></div>
+          <div class="hp-bar"><div class="hp-fill" id="pokeHp"></div></div>
+          <div class="hp-text" id="pokeHpLabel">100/100</div>
+        </div>
+      </div>
+
+      <div class="word-box">
+        <div class="label">
+          <span>✏️ SPELL THIS WORD</span>
+          <span class="timer" id="timer">⏱️ --s</span>
+        </div>
+        <div class="word-display" id="targetWord">-----</div>
+      </div>
+
+      <div class="input-row">
+        <input type="text" id="spellInput" placeholder="type the word..." autocomplete="off" spellcheck="false" aria-label="Spell the word">
+        <button class="btn" style="min-width:auto;padding:14px 22px" onclick="checkSpelling()">GO!</button>
+      </div>
+      <div class="msg" id="msg">✨ 記住個生字，然後串出嚟！</div>
+
+      <div class="action-btns">
+        <button class="btn btn-small" onclick="useHint()" id="hintBtn">💡 Hint (-10 HP)</button>
+        <button class="btn btn-small" onclick="backToMenu()">QUIT</button>
+      </div>
+    </div>
+
+    <!-- CATCH SUCCESS -->
+    <div id="catchView" class="view">
+      <div class="catch-container">
+        <h1>🎉 GOTCHA!</h1>
+        <img class="caught-sprite" id="caughtSprite" src="" alt="Caught Pokemon" onerror="this.style.display='none'">
+        <div class="catch-stars">★★★</div>
+        <h2 id="caughtName">Pokémon</h2>
+        <p style="font-size:11px;margin:12px 0;color:#aaa">用咗 <span id="catchHits">3</span> 次命中!</p>
+        <div style="margin-top:16px">
+          <button class="btn" onclick="nextPokemon()">NEXT BATTLE</button>
+          <button class="btn" onclick="backToMenu()">MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="overView" class="view">
+      <h1>💀 FAINTED!</h1>
+      <p style="font-size:12px;margin:12px 0;color:var(--red)">Your HP reached 0</p>
+      <div class="game-over-stats">
+        <div class="stat-row"><span>Pokémon Caught</span><span id="finalCaught">0</span></div>
+        <div class="stat-row"><span>Best Streak</span><span id="finalStreak">0</span></div>
+        <div class="stat-row"><span>Total Correct</span><span id="finalHits">0</span></div>
+        <div class="stat-row"><span>Accuracy</span><span id="finalAccuracy">0%</span></div>
+      </div>
+      <div class="high-score" id="overHighScore"></div>
+      <button class="btn" onclick="backToMenu()" style="margin-top:16px">TRY AGAIN</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const WORDS = {
+  junior: ["cat","dog","sun","run","big","red","hat","cup","pen","box","fish","bird","tree","book","ball","milk","cake","door","hand","foot","happy","water","house","apple","green","blue","jump","play","sing","look","star","moon","rain","snow","wind","warm","cold","fast","slow","loud","frog","duck","bear","lion","king","queen"],
+  senior: ["friend","school","teacher","animal","garden","window","family","morning","beautiful","important","together","different","because","through","always","mountain","river","forest","castle","dragon","magic","puzzle","brave","quiet","listen","write","read","speak","learn","think","science","history","music","art","summer","winter","spring","autumn","flower","grass","ocean","desert","bicycle","breakfast","chocolate","elephant","hospital","library"],
+  juniorSec: ["adventure","courage","mystery","treasure","journey","discover","explore","ancient","powerful","shadow","crystal","legend","whisper","thunder","silent","balance","freedom","wisdom","mysterious","suddenly","although","necessary","environment","communication","responsibility","imagination","literature","mathematics","technology","generation","atmosphere","population","extraordinary","intelligence","struggle","splendid"],
+  seniorSec: ["perseverance","extraordinary","sophisticated","consequence","hypothesis","perspective","significant","acknowledge","circumstance","meticulous","controversy","interpretation","analysis","evaluation","phenomenon","infrastructure","bureaucracy","philosophy","renaissance","equilibrium","ambiguous","benevolent","diligent","eloquent","formidable","paradigm","juxtaposition","existential","anthropology","photosynthesis","unprecedented","entrepreneur","mathematics","accommodation"]
+};
+
+const POKEMON = [
+  [1,"Bulbasaur"],[2,"Ivysaur"],[3,"Venusaur"],[4,"Charmander"],[5,"Charmeleon"],[6,"Charizard"],
+  [7,"Squirtle"],[8,"Wartortle"],[9,"Blastoise"],[10,"Caterpie"],[11,"Metapod"],[12,"Butterfree"],
+  [13,"Weedle"],[14,"Kakuna"],[15,"Beedrill"],[16,"Pidgey"],[17,"Pidgeotto"],[18,"Pidgeot"],
+  [19,"Rattata"],[20,"Raticate"],[21,"Spearow"],[22,"Fearow"],[23,"Ekans"],[24,"Arbok"],
+  [25,"Pikachu"],[26,"Raichu"],[27,"Sandshrew"],[28,"Sandslash"],[29,"Nidoran♀"],[30,"Nidorina"],
+  [31,"Nidoqueen"],[32,"Nidoran♂"],[33,"Nidorino"],[34,"Nidoking"],[35,"Clefairy"],[36,"Clefable"],
+  [37,"Vulpix"],[38,"Ninetales"],[39,"Jigglypuff"],[40,"Wigglytuff"],[41,"Zubat"],[42,"Golbat"],
+  [43,"Oddish"],[44,"Gloom"],[45,"Vileplume"],[46,"Paras"],[47,"Parasect"],[48,"Venonat"],
+  [49,"Venomoth"],[50,"Diglett"],[51,"Dugtrio"],[52,"Meowth"],[53,"Persian"],[54,"Psyduck"],
+  [55,"Golduck"],[56,"Mankey"],[57,"Primeape"],[58,"Growlithe"],[59,"Arcanine"],[60,"Poliwag"],
+  [61,"Poliwhirl"],[62,"Poliwrath"],[63,"Abra"],[64,"Kadabra"],[65,"Alakazam"],[66,"Machop"],
+  [67,"Machoke"],[68,"Machamp"],[69,"Bellsprout"],[70,"Weepinbell"],[71,"Victreebel"],[72,"Tentacool"],
+  [73,"Tentacruel"],[74,"Geodude"],[75,"Graveler"],[76,"Golem"],[77,"Ponyta"],[78,"Rapidash"],
+  [79,"Slowpoke"],[80,"Slowbro"],[81,"Magnemite"],[82,"Magneton"],[83,"Farfetch'd"],[84,"Doduo"],
+  [85,"Dodrio"],[86,"Seel"],[87,"Dewgong"],[88,"Grimer"],[89,"Muk"],[90,"Shellder"],[91,"Cloyster"],
+  [92,"Gastly"],[93,"Haunter"],[94,"Gengar"],[95,"Onix"],[96,"Drowzee"],[97,"Hypno"],[98,"Krabby"],
+  [99,"Kingler"],[100,"Voltorb"],[101,"Electrode"],[102,"Exeggcute"],[103,"Exeggutor"],[104,"Cubone"],
+  [105,"Marowak"],[106,"Hitmonlee"],[107,"Hitmonchan"],[108,"Lickitung"],[109,"Koffing"],[110,"Weezing"],
+  [111,"Rhyhorn"],[112,"Rhydon"],[113,"Chansey"],[114,"Tangela"],[115,"Kangaskhan"],[116,"Horsea"],
+  [117,"Seadra"],[118,"Goldeen"],[119,"Seaking"],[120,"Staryu"],[121,"Starmie"],[122,"Mr. Mime"],
+  [123,"Scyther"],[124,"Jynx"],[125,"Electabuzz"],[126,"Magmar"],[127,"Pinsir"],[128,"Tauros"],
+  [129,"Magikarp"],[130,"Gyarados"],[131,"Lapras"],[132,"Ditto"],[133,"Eevee"],[134,"Vaporeon"],
+  [135,"Jolteon"],[136,"Flareon"],[137,"Porygon"],[138,"Omanyte"],[139,"Omastar"],[140,"Kabuto"],
+  [141,"Kabutops"],[142,"Aerodactyl"],[143,"Snorlax"],[144,"Articuno"],[145,"Zapdos"],[146,"Moltres"],
+  [147,"Dratini"],[148,"Dragonair"],[149,"Dragonite"],[150,"Mewtwo"],[151,"Mew"]
+];
+
+const IMG_BASE = "https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/";
+const IMG_THUMB = IMG_BASE + "thumbnails-compressed/";
+const IMG_FULL = IMG_BASE + "images/";
+const pad = n => String(n).padStart(4, "0");
+
+// ===================== STATE =====================
+let level = "junior";
+let wordList = [];
+let usedWords = [];
+let currentWord = "";
+let masked = "";
+let playerHP = 100;
+let pokeHP = 100;
+let hits = 0;
+let streak = 0;
+let bestStreak = 0;
+let caught = 0;
+let totalCorrect = 0;
+let totalAttempts = 0;
+let timer = 0;
+let timerInt = null;
+let flashInt = null;
+let roundBusy = false;
+let currentPoke = null;
+let muted = false;
+
+// ===================== SOUND (WebAudio) =====================
+let actx = null;
+let musicTimer = null;
+let musicStep = 0;
+const NOTE = f => { return f; };
+const MELODY = [
+  523, 523, 587, 659, 659, 587, 659, 784, 659, 659, 587, 587, 523, 523, 587, 523,
+  659, 659, 784, 880, 880, 784, 659, 587, 523, 523, 587, 659, 784, 784, 659, 523
+];
+const BASS = [262, 262, 294, 330, 330, 294, 330, 392, 330, 330, 294, 294, 262, 262, 294, 262];
+
+function initAudio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  if (actx && actx.state === "suspended") actx.resume();
+}
+function tone(freq, dur, type, vol, when) {
+  if (!actx || muted) return;
+  const t = actx.currentTime + (when || 0);
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.type = type || "square"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.12, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+const sfxCorrect = () => { [523, 659, 784].forEach((f, i) => tone(f, 0.12, "square", 0.12, i * 0.08)); };
+const sfxWrong = () => { [220, 185, 147].forEach((f, i) => tone(f, 0.15, "sawtooth", 0.1, i * 0.1)); };
+const sfxHit = () => { tone(140, 0.2, "triangle", 0.2); tone(90, 0.3, "square", 0.15, 0.05); };
+const sfxCatch = () => { [392, 523, 659, 784, 1047].forEach((f, i) => tone(f, 0.15, "square", 0.12, i * 0.09)); };
+const sfxGameOver = () => { [330, 294, 262, 220, 196, 165].forEach((f, i) => tone(f, 0.25, "sawtooth", 0.1, i * 0.18)); };
+const sfxFlash = () => { tone(880, 0.08, "square", 0.08); tone(1175, 0.1, "square", 0.08, 0.1); };
+const sfxTimer = () => { tone(660, 0.06, "square", 0.06); };
+
+function startMusic() {
+  if (!actx || musicTimer) return;
+  musicStep = 0;
+  musicTimer = setInterval(() => {
+    if (muted) return;
+    const i = musicStep % MELODY.length;
+    tone(MELODY[i], 0.16, "square", 0.05);
+    if (i % 4 === 0) tone(BASS[(i / 4) % BASS.length | 0], 0.3, "triangle", 0.07);
+    musicStep++;
+  }, 250);
+}
+function stopMusic() {
+  if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+}
+function toggleMute() {
+  muted = !muted;
+  document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊";
+}
+
+// ===================== VIEW HELPERS =====================
+function showView(id) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function setMsg(txt, cls) {
+  const m = document.getElementById("msg");
+  m.textContent = txt;
+  m.className = "msg" + (cls ? " " + cls : "");
+}
+function updateHpBar(el, hp, max) {
+  el.style.width = hp + "%";
+  el.classList.toggle("low", hp <= 30);
+  el.classList.toggle("medium", hp > 30 && hp <= 60);
+}
+
+// ===================== GAME FLOW =====================
+function startGame(lvl) {
+  initAudio();
+  level = lvl;
+  wordList = WORDS[lvl].slice();
+  usedWords = [];
+  playerHP = 100; caught = 0; streak = 0; bestStreak = 0; totalCorrect = 0; totalAttempts = 0;
+  document.getElementById("caughtCount").textContent = "0";
+  document.getElementById("streak").textContent = "0";
+  document.getElementById("playerHpText").textContent = "100";
+  document.getElementById("playerHpLabel").textContent = "100/100";
+  updateHpBar(document.getElementById("playerHp"), 100, 100);
+  document.getElementById("hits").textContent = "0";
+  showView("battleView");
+  startMusic();
+  nextPokemon();
+}
+function nextPokemon() {
+  // random unused Pokémon
+  if (!currentPoke) currentPoke = POKEMON[Math.floor(Math.random() * POKEMON.length)];
+  else {
+    let idx;
+    do { idx = Math.floor(Math.random() * POKEMON.length); } while (POKEMON[idx][0] === currentPoke[0]);
+    currentPoke = POKEMON[idx];
+  }
+  const [id, name] = currentPoke;
+  document.getElementById("pokeName").textContent = name;
+  document.getElementById("pokeHpLabel").textContent = "100/100";
+  document.getElementById("hits").textContent = "0";
+  updateHpBar(document.getElementById("pokeHp"), 100, 100);
+  const img = document.getElementById("pokeSprite");
+  img.style.display = "none";
+  document.getElementById("pokeLoading").style.display = "inline-block";
+  img.onload = () => { img.style.display = "block"; document.getElementById("pokeLoading").style.display = "none"; };
+  img.onerror = () => {
+    if (img.src.includes("thumbnails")) { img.src = IMG_FULL + pad(id) + ".png"; return; }
+    img.style.display = "block"; img.src = ""; img.alt = "?"; document.getElementById("pokeLoading").style.display = "none";
+  };
+  img.src = IMG_THUMB + pad(id) + ".png";
+  pokeHP = 100; hits = 0;
+  showView("battleView");
+  newWord();
+}
+function newWord() {
+  if (wordList.length === 0) wordList = WORDS[level].slice();
+  const i = Math.floor(Math.random() * wordList.length);
+  currentWord = wordList.splice(i, 1)[0];
+  usedWords.push(currentWord);
+  // memorize phase
+  clearInterval(timerInt);
+  roundBusy = true;
+  document.getElementById("spellInput").value = "";
+  document.getElementById("spellInput").disabled = true;
+  const disp = document.getElementById("targetWord");
+  disp.textContent = currentWord;
+  disp.className = "word-display memorize";
+  setMsg("✨ 記住呢個生字...", "info");
+  sfxFlash();
+  let flash = 3;
+  let flashInt = setInterval(() => {
+    flash--;
+    if (flash <= 0) {
+      clearInterval(flashInt);
+      masked = "_".repeat(currentWord.length);
+      disp.textContent = masked;
+      disp.className = "word-display";
+      document.getElementById("spellInput").disabled = false;
+      document.getElementById("spellInput").focus();
+      setMsg("✏️ 串出嚟！", "info");
+      startTimer(15);
+      roundBusy = false;
+    } else {
+      disp.textContent = currentWord + " (" + flash + ")";
+      sfxFlash();
+    }
+  }, 700);
+}
+function startTimer(secs) {
+  timer = secs;
+  const tEl = document.getElementById("timer");
+  tEl.textContent = "⏱️ " + timer + "s";
+  tEl.classList.remove("danger");
+  clearInterval(timerInt);
+  timerInt = setInterval(() => {
+    timer--;
+    tEl.textContent = "⏱️ " + timer + "s";
+    if (timer <= 5) { tEl.classList.add("danger"); sfxTimer(); }
+    if (timer <= 0) {
+      clearInterval(timerInt);
+      onTimeout();
+    }
+  }, 1000);
+}
+function checkSpelling() {
+  if (roundBusy) return;
+  const input = document.getElementById("spellInput").value.trim().toLowerCase();
+  if (!input) return;
+  totalAttempts++;
+  if (input === currentWord.toLowerCase()) {
+    totalCorrect++;
+    document.getElementById("spellInput").classList.add("correct");
+    setTimeout(() => document.getElementById("spellInput").classList.remove("correct"), 300);
+    sfxCorrect();
+    onCorrect();
+  } else {
+    document.getElementById("spellInput").classList.add("wrong");
+    setTimeout(() => document.getElementById("spellInput").classList.remove("wrong"), 400);
+    sfxWrong();
+    streak = 0;
+    document.getElementById("streak").textContent = "0";
+    damagePlayer(10, "串錯咗！正確係「" + currentWord + "」");
+  }
+}
+function onCorrect() {
+  clearInterval(timerInt);
+  streak++;
+  bestStreak = Math.max(bestStreak, streak);
+  document.getElementById("streak").textContent = streak;
+  document.getElementById("streakBox").classList.add("highlight");
+  setTimeout(() => document.getElementById("streakBox").classList.remove("highlight"), 400);
+  hits++;
+  document.getElementById("hits").textContent = hits;
+  // Pokémon takes damage
+  pokeHP = Math.max(0, pokeHP - 40);
+  updateHpBar(document.getElementById("pokeHp"), pokeHP, 100);
+  document.getElementById("pokeHpLabel").textContent = pokeHP + "/100";
+  const sprite = document.getElementById("pokeSprite");
+  sprite.classList.add("hit");
+  setTimeout(() => sprite.classList.remove("hit"), 500);
+  sfxHit();
+  if (pokeHP <= 0) {
+    setMsg("🎉 " + currentPoke[1] + " 被削弱咗！拋出精靈球！", "good");
+    setTimeout(catchPokemon, 700);
+  } else {
+    setMsg("⚔️ 命中！" + currentPoke[1] + " HP " + pokeHP + " (" + hits + "/3)", "good");
+    setTimeout(newWord, 900);
+  }
+}
+function damagePlayer(dmg, reason) {
+  playerHP = Math.max(0, playerHP - dmg);
+  document.getElementById("playerHpText").textContent = playerHP;
+  document.getElementById("playerHpLabel").textContent = playerHP + "/100";
+  updateHpBar(document.getElementById("playerHp"), playerHP, 100);
+  const ps = document.getElementById("playerSprite");
+  ps.classList.add("hit"); setTimeout(() => ps.classList.remove("hit"), 500);
+  setMsg("💥 " + reason + " (-" + dmg + " HP)", "bad");
+  if (playerHP <= 0) { clearInterval(timerInt); setTimeout(gameOver, 900); }
+  else setTimeout(newWord, 1100);
+}
+function onTimeout() {
+  sfxWrong();
+  streak = 0;
+  document.getElementById("streak").textContent = "0";
+  damagePlayer(10, "時間到！正確係「" + currentWord + "」");
+}
+function useHint() {
+  if (roundBusy || playerHP <= 10) return;
+  const disp = document.getElementById("targetWord");
+  if (disp.textContent.includes("_")) {
+    playerHP -= 10;
+    document.getElementById("playerHpText").textContent = playerHP;
+    document.getElementById("playerHpLabel").textContent = playerHP + "/100";
+    updateHpBar(document.getElementById("playerHp"), playerHP, 100);
+    // reveal one letter
+    let chars = disp.textContent.split("");
+    for (let i = 0; i < chars.length; i++) {
+      if (chars[i] === "_") { chars[i] = currentWord[i]; break; }
+    }
+    masked = chars.join("");
+    disp.textContent = masked;
+    disp.className = "word-display hint-used";
+    setMsg("💡 提示 -10 HP，剩 " + playerHP + " HP", "info");
+    tone(600, 0.1, "square", 0.08);
+    if (playerHP <= 0) { clearInterval(timerInt); setTimeout(gameOver, 500); }
+  }
+}
+function catchPokemon() {
+  stopMusic();
+  sfxCatch();
+  caught++;
+  document.getElementById("caughtCount").textContent = caught;
+  document.getElementById("caughtSprite").src = IMG_THUMB + pad(currentPoke[0]) + ".png";
+  document.getElementById("caughtName").textContent = currentPoke[1] + "！";
+  document.getElementById("catchHits").textContent = hits;
+  saveHighScore();
+  showView("catchView");
+}
+function gameOver() {
+  stopMusic();
+  sfxGameOver();
+  document.getElementById("finalCaught").textContent = caught;
+  document.getElementById("finalStreak").textContent = bestStreak;
+  document.getElementById("finalHits").textContent = totalCorrect;
+  document.getElementById("finalAccuracy").textContent = totalAttempts ? Math.round(totalCorrect / totalAttempts * 100) + "%" : "0%";
+  saveHighScore();
+  const best = localStorage.getItem("pokespell_best") || "0";
+  document.getElementById("overHighScore").textContent = "🏆 Best: " + best + " caught";
+  showView("overView");
+}
+function backToMenu() {
+  clearInterval(timerInt);
+  stopMusic();
+  showView("levelView");
+  document.getElementById("menuHighScore").textContent = "🏆 Best: " + (localStorage.getItem("pokespell_best") || "0") + " caught";
+}
+function saveHighScore() {
+  const best = parseInt(localStorage.getItem("pokespell_best") || "0", 10);
+  if (caught > best) localStorage.setItem("pokespell_best", String(caught));
+}
+
+// Enter key submits
+document.getElementById("spellInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); checkSpelling(); }
+});
+
+// init high score
+document.getElementById("menuHighScore").textContent = "🏆 Best: " + (localStorage.getItem("pokespell_best") || "0") + " caught";
+</script>
+</body>
+</html>
