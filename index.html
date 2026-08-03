@@ -156,8 +156,8 @@
   .gb-textbox #targetWord.hint-used { color: #e65100; }
   .gb-textbox .timer { color: #333; font-size: 11px; }
   .gb-textbox .timer.danger { color: #c62828; }
-  .keyboard { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-top: 10px; }
-  .key { background: #3a5f0b; border: 2px solid #222; color: #fff; font-family: inherit; font-size: 11px; padding: 8px 0; border-radius: 5px; cursor: pointer; text-transform: lowercase; box-shadow: 0 2px 0 #222; transition: all .05s; }
+  .keyboard { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-top: 8px; }
+  .key { background: #3a5f0b; border: 2px solid #222; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-weight: 700; font-size: 15px; padding: 9px 0; border-radius: 6px; cursor: pointer; text-transform: none; box-shadow: 0 2px 0 #222; transition: all .05s; letter-spacing: 0; }
   .key:hover { background: #6fbf3f; color: #000; }
   .key:active { transform: translateY(1px); box-shadow: none; }
   .key-spacer { visibility: hidden; }
@@ -202,7 +202,7 @@
     .console { padding: 6px 8px; border-radius: 12px; }
     .console::before, .console::after { display: none; }
     .screen { border: 3px solid #111; min-height: 0; }
-    .view { padding: 12px 10px; }
+    .view { padding: 8px 6px; }
     h1 { font-size: 16px; }
     .level-grid { grid-template-columns: 1fr; }
     .sprite { width: 80px; height: 80px; }
@@ -215,8 +215,8 @@
     .hp-box { min-width: 125px; padding: 4px 7px; }
     .hp-box .hp-name { font-size: 9px; }
     .gb-textbox #targetWord { font-size: 16px; letter-spacing: 2px; }
-    .key { font-size: 13px; padding: 11px 0; min-height: 44px; }
-    .key.go { font-size: 13px; }
+    .key { font-size: 17px; padding: 12px 0; min-height: 46px; }
+    .key.go { font-size: 15px; }
     .btn { min-width: 200px; font-size: 10px; padding: 12px 16px; min-height: 44px; }
     .btn-small { min-height: 40px; }
     .stats { gap: 4px; }
@@ -294,11 +294,12 @@
           <div class="word-display" id="targetWord">-----</div>
           <span class="timer" id="timer">⏱️ --</span>
         </div>
-        <div class="keyboard" id="keyboard" aria-label="Built-in keyboard">
-          <button class="key" onclick="pressKey('q')">q</button><button class="key" onclick="pressKey('w')">w</button><button class="key" onclick="pressKey('e')">e</button><button class="key" onclick="pressKey('r')">r</button><button class="key" onclick="pressKey('t')">t</button><button class="key" onclick="pressKey('y')">y</button><button class="key" onclick="pressKey('u')">u</button><button class="key" onclick="pressKey('i')">i</button><button class="key" onclick="pressKey('o')">o</button><button class="key" onclick="pressKey('p')">p</button>
-          <button class="key" onclick="pressKey('a')">a</button><button class="key" onclick="pressKey('s')">s</button><button class="key" onclick="pressKey('d')">d</button><button class="key" onclick="pressKey('f')">f</button><button class="key" onclick="pressKey('g')">g</button><button class="key" onclick="pressKey('h')">h</button><button class="key" onclick="pressKey('j')">j</button><button class="key" onclick="pressKey('k')">k</button><button class="key" onclick="pressKey('l')">l</button><div class="key-spacer"></div>
-          <button class="key" onclick="pressKey('z')">z</button><button class="key" onclick="pressKey('x')">x</button><button class="key" onclick="pressKey('c')">c</button><button class="key" onclick="pressKey('v')">v</button><button class="key" onclick="pressKey('b')">b</button><button class="key" onclick="pressKey('n')">n</button><button class="key" onclick="pressKey('m')">m</button><button class="key back" onclick="backspaceKey()" aria-label="Delete">⌫</button><button class="key go" onclick="submitSpell()">GO!</button>
-        </div>
+      </div>
+
+      <div class="keyboard" id="keyboard" aria-label="Built-in keyboard">
+        <button class="key" onclick="pressKey('q')">q</button><button class="key" onclick="pressKey('w')">w</button><button class="key" onclick="pressKey('e')">e</button><button class="key" onclick="pressKey('r')">r</button><button class="key" onclick="pressKey('t')">t</button><button class="key" onclick="pressKey('y')">y</button><button class="key" onclick="pressKey('u')">u</button><button class="key" onclick="pressKey('i')">i</button><button class="key" onclick="pressKey('o')">o</button><button class="key" onclick="pressKey('p')">p</button>
+        <button class="key" onclick="pressKey('a')">a</button><button class="key" onclick="pressKey('s')">s</button><button class="key" onclick="pressKey('d')">d</button><button class="key" onclick="pressKey('f')">f</button><button class="key" onclick="pressKey('g')">g</button><button class="key" onclick="pressKey('h')">h</button><button class="key" onclick="pressKey('j')">j</button><button class="key" onclick="pressKey('k')">k</button><button class="key" onclick="pressKey('l')">l</button><div class="key-spacer"></div>
+        <button class="key" onclick="pressKey('z')">z</button><button class="key" onclick="pressKey('x')">x</button><button class="key" onclick="pressKey('c')">c</button><button class="key" onclick="pressKey('v')">v</button><button class="key" onclick="pressKey('b')">b</button><button class="key" onclick="pressKey('n')">n</button><button class="key" onclick="pressKey('m')">m</button><button class="key back" onclick="backspaceKey()" aria-label="Delete">⌫</button><button class="key go" onclick="submitSpell()">GO!</button>
       </div>
 
       <div class="action-btns">
