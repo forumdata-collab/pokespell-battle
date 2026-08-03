@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>PokéSpell Battle — Pokémon 英文串字遊戲</title>
 <meta name="description" content="Pokémon 主題英文串字遊戲：睇完生字記低，正確串出嚟打敗寶可夢！適合小學至中學英文學習。">
 <meta property="og:title" content="PokéSpell Battle — Pokémon 英文串字遊戲">
@@ -199,24 +199,30 @@
   }
 
   @media (max-width: 640px) {
-    .console { padding: 16px 24px; border-radius: 24px; }
+    .console { padding: 6px 8px; border-radius: 12px; }
     .console::before, .console::after { display: none; }
+    .screen { border: 3px solid #111; min-height: 0; }
+    .view { padding: 12px 10px; }
     h1 { font-size: 16px; }
     .level-grid { grid-template-columns: 1fr; }
     .sprite { width: 80px; height: 80px; }
     .caught-sprite { width: 120px; height: 120px; }
     .word-display { font-size: 16px; letter-spacing: 2px; }
     .btn { min-width: 200px; font-size: 10px; padding: 12px 16px; }
-    .battle-field { height: 230px; }
-    .enemy-sprite { width: 80px; height: 80px; top: 68px; right: 16px; }
-    .player-sprite { width: 100px; height: 100px; bottom: 70px; left: 12px; }
-    .hp-box { min-width: 130px; padding: 5px 8px; }
+    .battle-field { height: 270px; }
+    .enemy-sprite { width: 88px; height: 88px; top: 74px; right: 14px; }
+    .player-sprite { width: 110px; height: 110px; bottom: 74px; left: 12px; }
+    .hp-box { min-width: 125px; padding: 4px 7px; }
     .hp-box .hp-name { font-size: 9px; }
-    .gb-textbox #targetWord { font-size: 15px; letter-spacing: 2px; }
-    .key { font-size: 13px; padding: 11px 0; }
+    .gb-textbox #targetWord { font-size: 16px; letter-spacing: 2px; }
+    .key { font-size: 13px; padding: 11px 0; min-height: 44px; }
     .key.go { font-size: 13px; }
-    .stats { gap: 6px; }
-    .stat-box { padding: 8px; }
+    .btn { min-width: 200px; font-size: 10px; padding: 12px 16px; min-height: 44px; }
+    .btn-small { min-height: 40px; }
+    .stats { gap: 4px; }
+    .stat-box { padding: 6px 4px; }
+    .stat-label { font-size: 7px; }
+    .stat-value { font-size: 10px; }
   }
 </style>
 </head>
@@ -252,7 +258,7 @@
         </div>
       </div>
       <div class="high-score" id="menuHighScore">🏆 Best: 0 caught</div>
-      <footer>記住生字 → 正確串出嚟 → 削弱寶可夢<br>3 次命中 → 拋出精靈球！串錯 → 你扣血<br>💡 提示要扣 10 HP</footer>
+      <footer>記住生字 → 正確串出嚟 → 削弱寶可夢<br>3 次命中 → 拋出精靈球！串錯 → 你扣血<br>💡 提示要扣 10 HP<br>🔊 點擊畫面開啟音效</footer>
     </div>
 
     <!-- BATTLE -->
@@ -267,15 +273,15 @@
       <div class="battle-field">
         <div class="hp-box" id="enemyHpBox">
           <span class="hp-name" id="pokeName">???</span><span class="hp-lv">Lv.25</span>
-          <div class="hp-bar-gb"><div class="hp-fill-gb" id="pokeHp"></div></div>
+          <div class="hp-bar-gb" role="progressbar" aria-label="Wild Pokémon HP"><div class="hp-fill-gb" id="pokeHp"></div></div>
           <div class="hp-num" id="pokeHpLabel">100/100</div>
         </div>
         <img class="sprite enemy-sprite" id="pokeSprite" src="" alt="Pokemon" style="display:none">
         <div class="loading field-loading" id="pokeLoading"></div>
-        <img class="sprite player-sprite" id="playerSprite" src="https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/thumbnails-compressed/0025.png" alt="Pikachu" onerror="this.style.visibility='hidden'">
+        <img class="sprite player-sprite" id="playerSprite" src="" alt="Pikachu (player)">
         <div class="hp-box" id="playerHpBox">
           <span class="hp-name">PIKACHU</span><span class="hp-lv">Lv.25</span>
-          <div class="hp-bar-gb"><div class="hp-fill-gb" id="playerHp"></div></div>
+          <div class="hp-bar-gb" role="progressbar" aria-label="Player HP"><div class="hp-fill-gb" id="playerHp"></div></div>
           <div class="hp-num" id="playerHpLabel">100/100</div>
         </div>
         <div id="pokeball" class="pokeball"></div>
@@ -338,10 +344,10 @@
 <script>
 // ===================== DATA =====================
 const WORDS = {
-  junior: ["cat","dog","sun","run","big","red","hat","cup","pen","box","fish","bird","tree","book","ball","milk","cake","door","hand","foot","happy","water","house","apple","green","blue","jump","play","sing","look","star","moon","rain","snow","wind","warm","cold","fast","slow","loud","frog","duck","bear","lion","king","queen"],
-  senior: ["friend","school","teacher","animal","garden","window","family","morning","beautiful","important","together","different","because","through","always","mountain","river","forest","castle","dragon","magic","puzzle","brave","quiet","listen","write","read","speak","learn","think","science","history","music","art","summer","winter","spring","autumn","flower","grass","ocean","desert","bicycle","breakfast","chocolate","elephant","hospital","library"],
-  juniorSec: ["adventure","courage","mystery","treasure","journey","discover","explore","ancient","powerful","shadow","crystal","legend","whisper","thunder","silent","balance","freedom","wisdom","mysterious","suddenly","although","necessary","environment","communication","responsibility","imagination","literature","mathematics","technology","generation","atmosphere","population","extraordinary","intelligence","struggle","splendid"],
-  seniorSec: ["perseverance","extraordinary","sophisticated","consequence","hypothesis","perspective","significant","acknowledge","circumstance","meticulous","controversy","interpretation","analysis","evaluation","phenomenon","infrastructure","bureaucracy","philosophy","renaissance","equilibrium","ambiguous","benevolent","diligent","eloquent","formidable","paradigm","juxtaposition","existential","anthropology","photosynthesis","unprecedented","entrepreneur","mathematics","accommodation"]
+  junior: ["cat","dog","sun","run","big","red","hat","cup","pen","box","fish","bird","tree","book","ball","milk","cake","door","hand","foot","happy","water","house","apple","green","blue","jump","play","sing","look","star","moon","rain","snow","wind","warm","cold","fast","slow","loud","frog","duck","bear","lion","king","queen","ant","bee","cow","pig","hen","egg","ice","key","map","net","owl","van","web","fox","jam","kid","lip","mud","nut","toe","zip","desk","lamp","kite","boat","ship","farm","park","shop","ring","bell","gift","doll","drum","nest","coat","shoe","sock","soap","mask","leaf","rock","sand","hill","path","clay","gold","hair","eyes","nose","chin","corn","moon"],
+  senior: ["friend","school","teacher","animal","garden","window","family","morning","beautiful","important","together","different","because","through","always","mountain","river","forest","castle","dragon","magic","puzzle","brave","quiet","listen","write","read","speak","learn","think","science","history","music","art","summer","winter","spring","autumn","flower","grass","ocean","desert","bicycle","breakfast","chocolate","elephant","hospital","library","pencil","paper","dinner","cookie","orange","purple","yellow","rabbit","turtle","monkey","tiger","panda","island","planet","rocket","space","earth","cloud","storm","thunder","rainbow","bridge","tower","village","market","basket","candle","pillow","blanket","kitchen","garden","picnic","safari","jungle","desert","island","dolphin","penguin","dinosaur","volcano"],
+  juniorSec: ["adventure","courage","mystery","treasure","journey","discover","explore","ancient","powerful","shadow","crystal","legend","whisper","thunder","silent","balance","freedom","wisdom","mysterious","suddenly","although","necessary","environment","communication","responsibility","imagination","literature","mathematics","technology","generation","atmosphere","population","extraordinary","intelligence","struggle","splendid","victory","champion","universe","galaxy","horizon","diamond","volcano","earthquake","lightning","hurricane","tropical","emergency","invisible","impossible","captain","treasure","courage","brilliant","fascinating","particular","favourite","traveller","dangerous","mountainous","wilderness","territory","boundary","frontier","expedition","expedition","strategy","tactics","weapon","armour","kingdom","empire","monarch","citizen","society","culture","tradition","festival","celebration","ceremony","performance","audience","theatre","museum","gallery","sculpture","painting"],
+  seniorSec: ["perseverance","extraordinary","sophisticated","consequence","hypothesis","perspective","significant","acknowledge","circumstance","meticulous","controversy","interpretation","analysis","evaluation","phenomenon","infrastructure","bureaucracy","philosophy","renaissance","equilibrium","ambiguous","benevolent","diligent","eloquent","formidable","paradigm","juxtaposition","existential","anthropology","photosynthesis","unprecedented","entrepreneur","accommodation","indispensable","connoisseur","acquaintance","enthusiasm","unanimous","spontaneous","miscellaneous","conscientious","reconciliation","jurisdiction","authenticity","proliferation","extrapolation","quintessential","idiosyncrasy","magnanimous","philanthropist","intellectual","metaphysical","epistemology","aforementioned","counterproductive","contradiction","manifestation","sustainability","surveillance","transparency","accountability","collaboration","opportunity","appreciation","consideration","substantial","achievement","commitment","improvement","development","establishment","administration","organisation","international","understanding","responsibility","concentration","determination","demonstration","implementation","transformation"]
 };
 
 const POKEMON = [
@@ -372,10 +378,27 @@ const POKEMON = [
   [147,"Dratini"],[148,"Dragonair"],[149,"Dragonite"],[150,"Mewtwo"],[151,"Mew"]
 ];
 
-const IMG_BASE = "https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/";
-const IMG_THUMB = IMG_BASE + "thumbnails-compressed/";
-const IMG_FULL = IMG_BASE + "images/";
+const CDN = "https://cdn.jsdelivr.net/gh/HybridShivam/Pokemon@master/assets/";
+const RAW = "https://raw.githubusercontent.com/HybridShivam/Pokemon/master/assets/";
 const pad = n => String(n).padStart(4, "0");
+const PLACEHOLDER = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" rx="24" fill="#1a1c2c"/><text x="60" y="80" font-size="54" text-anchor="middle">🐾</text></svg>');
+// jsdelivr CDN 優先（更穩 + 中國可達），raw.githubusercontent 後備，最後 emoji fallback
+function loadPoke(img, id, quality) {
+  const dir = (quality === "img") ? "images/" : "thumbnails-compressed/";
+  const chain = [
+    CDN + dir + pad(id) + ".png",
+    RAW + dir + pad(id) + ".png",
+    CDN + "images/" + pad(id) + ".png",
+    RAW + "images/" + pad(id) + ".png"
+  ];
+  let idx = 0;
+  img.onerror = () => {
+    idx++;
+    if (idx < chain.length) img.src = chain[idx];
+    else { img.onerror = null; img.src = PLACEHOLDER; }
+  };
+  img.src = chain[0];
+}
 
 // ===================== STATE =====================
 let level = "junior";
@@ -500,11 +523,8 @@ function nextPokemon() {
   img.style.display = "none";
   document.getElementById("pokeLoading").style.display = "inline-block";
   img.onload = () => { img.style.display = "block"; document.getElementById("pokeLoading").style.display = "none"; };
-  img.onerror = () => {
-    if (img.src.includes("thumbnails")) { img.src = IMG_FULL + pad(id) + ".png"; return; }
-    img.style.display = "block"; img.src = ""; img.alt = "?"; document.getElementById("pokeLoading").style.display = "none";
-  };
-  img.src = IMG_THUMB + pad(id) + ".png";
+  img.alt = name + " (wild)";
+  loadPoke(img, id, "thumb");
   pokeHP = 100; hits = 0;
   showView("battleView");
   newWord();
@@ -607,26 +627,6 @@ function startTimer(secs) {
     }
   }, 1000);
 }
-function checkSpelling() {
-  if (roundBusy) return;
-  const input = document.getElementById("spellInput").value.trim().toLowerCase();
-  if (!input) return;
-  totalAttempts++;
-  if (input === currentWord.toLowerCase()) {
-    totalCorrect++;
-    document.getElementById("spellInput").classList.add("correct");
-    setTimeout(() => document.getElementById("spellInput").classList.remove("correct"), 300);
-    sfxCorrect();
-    onCorrect();
-  } else {
-    document.getElementById("spellInput").classList.add("wrong");
-    setTimeout(() => document.getElementById("spellInput").classList.remove("wrong"), 400);
-    sfxWrong();
-    streak = 0;
-    document.getElementById("streak").textContent = "0";
-    damagePlayer(10, "串錯咗！正確係「" + currentWord + "」");
-  }
-}
 function onCorrect() {
   clearInterval(timerInt);
   streak++;
@@ -719,7 +719,8 @@ function catchPokemon() {
   sfxCatch();
   caught++;
   document.getElementById("caughtCount").textContent = caught;
-  document.getElementById("caughtSprite").src = IMG_THUMB + pad(currentPoke[0]) + ".png";
+  document.getElementById("caughtSprite").alt = "Caught " + currentPoke[1];
+  loadPoke(document.getElementById("caughtSprite"), currentPoke[0], "img");
   document.getElementById("caughtName").textContent = currentPoke[1] + "！";
   document.getElementById("catchHits").textContent = hits;
   saveHighScore();
@@ -757,6 +758,11 @@ window.addEventListener("keydown", e => {
   else if (e.key === "Backspace") { e.preventDefault(); backspaceKey(); }
   else if (e.key === "Enter") { e.preventDefault(); submitSpell(); }
 });
+
+// 首次點擊即初始化音效（合規 user gesture，唔會自動播）
+document.addEventListener("pointerdown", function once() { initAudio(); document.removeEventListener("pointerdown", once); }, { passive: true });
+// 玩家 Pikachu 圖片（jsdelivr + fallback 鏈）
+loadPoke(document.getElementById("playerSprite"), 25, "thumb");
 
 // init high score
 document.getElementById("menuHighScore").textContent = "🏆 Best: " + (localStorage.getItem("pokespell_best") || "0") + " caught";
