@@ -156,9 +156,16 @@
   .gb-textbox #targetWord.hint-used { color: #e65100; }
   .gb-textbox .timer { color: #333; font-size: 11px; }
   .gb-textbox .timer.danger { color: #c62828; }
-  .gb-textbox #spellInput { background: #fff; color: #222; border: 2px solid #555; text-transform: lowercase; }
-  .gb-textbox #spellInput::placeholder { text-transform: none; }
-  .gb-textbox #spellInput:focus { border-color: #222; box-shadow: none; }
+  .keyboard { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-top: 10px; }
+  .key { background: #3a5f0b; border: 2px solid #222; color: #fff; font-family: inherit; font-size: 11px; padding: 8px 0; border-radius: 5px; cursor: pointer; text-transform: lowercase; box-shadow: 0 2px 0 #222; transition: all .05s; }
+  .key:hover { background: #6fbf3f; color: #000; }
+  .key:active { transform: translateY(1px); box-shadow: none; }
+  .key-spacer { visibility: hidden; }
+  .key.back { background: #7f8c8d; }
+  .key.go { background: #e67e22; grid-column: span 2; font-size: 12px; }
+  .keyboard.off .key { opacity: .35; pointer-events: none; }
+  #targetWord.correct { color: #1e7d32; animation: correctPulse 0.35s; }
+  #targetWord.wrong { color: #c62828; animation: wrongShake 0.45s; }
   .gb-go { background: #3a5f0b; border-color: #222; }
   .gb-go:hover { background: #6fbf3f; color: #000; box-shadow: none; }
   .field-loading { position: absolute; top: 38%; left: 55%; transform: translate(-50%,-50%); z-index: 2; }
@@ -206,6 +213,8 @@
     .hp-box { min-width: 130px; padding: 5px 8px; }
     .hp-box .hp-name { font-size: 9px; }
     .gb-textbox #targetWord { font-size: 15px; letter-spacing: 2px; }
+    .key { font-size: 13px; padding: 11px 0; }
+    .key.go { font-size: 13px; }
     .stats { gap: 6px; }
     .stat-box { padding: 8px; }
   }
@@ -279,9 +288,10 @@
           <div class="word-display" id="targetWord">-----</div>
           <span class="timer" id="timer">⏱️ --</span>
         </div>
-        <div class="input-row">
-          <input type="text" id="spellInput" placeholder="type the word..." autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Spell the word">
-          <button class="btn gb-go" style="min-width:auto;padding:12px 18px" onclick="checkSpelling()">GO!</button>
+        <div class="keyboard" id="keyboard" aria-label="Built-in keyboard">
+          <button class="key" onclick="pressKey('q')">q</button><button class="key" onclick="pressKey('w')">w</button><button class="key" onclick="pressKey('e')">e</button><button class="key" onclick="pressKey('r')">r</button><button class="key" onclick="pressKey('t')">t</button><button class="key" onclick="pressKey('y')">y</button><button class="key" onclick="pressKey('u')">u</button><button class="key" onclick="pressKey('i')">i</button><button class="key" onclick="pressKey('o')">o</button><button class="key" onclick="pressKey('p')">p</button>
+          <button class="key" onclick="pressKey('a')">a</button><button class="key" onclick="pressKey('s')">s</button><button class="key" onclick="pressKey('d')">d</button><button class="key" onclick="pressKey('f')">f</button><button class="key" onclick="pressKey('g')">g</button><button class="key" onclick="pressKey('h')">h</button><button class="key" onclick="pressKey('j')">j</button><button class="key" onclick="pressKey('k')">k</button><button class="key" onclick="pressKey('l')">l</button><div class="key-spacer"></div>
+          <button class="key" onclick="pressKey('z')">z</button><button class="key" onclick="pressKey('x')">x</button><button class="key" onclick="pressKey('c')">c</button><button class="key" onclick="pressKey('v')">v</button><button class="key" onclick="pressKey('b')">b</button><button class="key" onclick="pressKey('n')">n</button><button class="key" onclick="pressKey('m')">m</button><button class="key back" onclick="backspaceKey()" aria-label="Delete">⌫</button><button class="key go" onclick="submitSpell()">GO!</button>
         </div>
       </div>
 
@@ -372,7 +382,8 @@ let level = "junior";
 let wordList = [];
 let usedWords = [];
 let currentWord = "";
-let masked = "";
+let typed = "";
+const hinted = new Set();
 let playerHP = 100;
 let pokeHP = 100;
 let hits = 0;
@@ -506,8 +517,9 @@ function newWord() {
   // memorize phase
   clearInterval(timerInt);
   roundBusy = true;
-  document.getElementById("spellInput").value = "";
-  document.getElementById("spellInput").disabled = true;
+  typed = "";
+  hinted.clear();
+  document.getElementById("keyboard").classList.add("off");
   const disp = document.getElementById("targetWord");
   disp.textContent = currentWord;
   disp.className = "word-display memorize";
@@ -518,11 +530,9 @@ function newWord() {
     flash--;
     if (flash <= 0) {
       clearInterval(flashInt);
-      masked = "_".repeat(currentWord.length);
-      disp.textContent = masked;
+      renderWord();
       disp.className = "word-display";
-      document.getElementById("spellInput").disabled = false;
-      document.getElementById("spellInput").focus();
+      document.getElementById("keyboard").classList.remove("off");
       setMsg("✏️ 串出嚟！", "info");
       startTimer(15);
       roundBusy = false;
@@ -531,6 +541,55 @@ function newWord() {
       sfxFlash();
     }
   }, 700);
+}
+function renderWord() {
+  const disp = document.getElementById("targetWord");
+  if (!currentWord) { disp.textContent = "-----"; return; }
+  let out = "";
+  for (let i = 0; i < currentWord.length; i++) {
+    if (hinted.has(i)) out += currentWord[i];
+    else if (i < typed.length) out += typed[i];
+    else out += "_";
+  }
+  disp.textContent = out;
+}
+function pressKey(ch) {
+  if (roundBusy) return;
+  if (typed.length >= currentWord.length) return;
+  typed += ch;
+  renderWord();
+  tone(760, 0.03, "square", 0.035);
+}
+function backspaceKey() {
+  if (roundBusy) return;
+  if (!typed) return;
+  typed = typed.slice(0, -1);
+  renderWord();
+  tone(520, 0.03, "square", 0.03);
+}
+function submitSpell() {
+  if (roundBusy) return;
+  const input = typed.toLowerCase();
+  if (!input) return;
+  roundBusy = true;
+  totalAttempts++;
+  if (input === currentWord.toLowerCase()) {
+    totalCorrect++;
+    document.getElementById("targetWord").classList.add("correct");
+    setTimeout(() => document.getElementById("targetWord").classList.remove("correct"), 350);
+    sfxCorrect();
+    typed = "";
+    onCorrect();
+  } else {
+    document.getElementById("targetWord").classList.add("wrong");
+    setTimeout(() => document.getElementById("targetWord").classList.remove("wrong"), 450);
+    sfxWrong();
+    typed = "";
+    renderWord();
+    streak = 0;
+    document.getElementById("streak").textContent = "0";
+    damagePlayer(10, "串錯咗！正確係「" + currentWord + "」");
+  }
 }
 function startTimer(secs) {
   timer = secs;
@@ -613,18 +672,17 @@ function onTimeout() {
 function useHint() {
   if (roundBusy || playerHP <= 10) return;
   const disp = document.getElementById("targetWord");
-  if (disp.textContent.includes("_")) {
+  let idx = -1;
+  for (let i = 0; i < currentWord.length; i++) {
+    if (!hinted.has(i)) { idx = i; break; }
+  }
+  if (idx >= 0) {
     playerHP -= 10;
     document.getElementById("playerHpText").textContent = playerHP;
     document.getElementById("playerHpLabel").textContent = playerHP + "/100";
     updateHpBar(document.getElementById("playerHp"), playerHP, 100);
-    // reveal one letter
-    let chars = disp.textContent.split("");
-    for (let i = 0; i < chars.length; i++) {
-      if (chars[i] === "_") { chars[i] = currentWord[i]; break; }
-    }
-    masked = chars.join("");
-    disp.textContent = masked;
+    hinted.add(idx);
+    renderWord();
     disp.className = "word-display hint-used";
     setMsg("💡 提示 -10 HP，剩 " + playerHP + " HP", "info");
     tone(600, 0.1, "square", 0.08);
@@ -690,9 +748,14 @@ function saveHighScore() {
   if (caught > best) localStorage.setItem("pokespell_best", String(caught));
 }
 
-// Enter key submits
-document.getElementById("spellInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") { e.preventDefault(); checkSpelling(); }
+// Physical keyboard support (desktop); built-in on-screen keyboard for mobile
+window.addEventListener("keydown", e => {
+  const t = e.target && e.target.tagName;
+  if (t === "BUTTON" && (e.key === "Enter" || e.key === " ")) return;
+  if (roundBusy) return;
+  if (/^[a-z]$/i.test(e.key)) { e.preventDefault(); pressKey(e.key.toLowerCase()); }
+  else if (e.key === "Backspace") { e.preventDefault(); backspaceKey(); }
+  else if (e.key === "Enter") { e.preventDefault(); submitSpell(); }
 });
 
 // init high score
